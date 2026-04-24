@@ -259,6 +259,22 @@ export default function App() {
     }
   };
 
+  const deleteUserRole = async (targetUid: string) => {
+    if (userRole !== 'admin') return;
+    if (targetUid === user?.uid) {
+      alert("No puedes eliminarte a ti mismo.");
+      return;
+    }
+    if (!confirm("¿Deseas eliminar este registro de rol? (No elimina la cuenta de Firebase, solo su acceso)")) return;
+    
+    try {
+      await deleteDoc(doc(db, 'roles', targetUid));
+    } catch (err) {
+      console.error("Error deleting role:", err);
+      alert("Error al eliminar el rol.");
+    }
+  };
+
   // --- Calculations ---
   const results = useMemo(() => {
     return calculateLiquorMetrics(
@@ -673,13 +689,15 @@ export default function App() {
                             <span className="text-[9px] font-mono text-slate-600">{u.id}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${u.role === 'admin' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                              {u.role}
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${u.id === user.uid ? 'bg-blue-500/20 text-blue-400' : u.role === 'admin' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                              {u.email?.toLowerCase() === 'jesus.israel.lima.canaza@gmail.com' ? 'ADMIN MAESTRO' : u.role}
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex justify-center gap-2">
-                              {u.role === 'staff' ? (
+                            <div className="flex justify-center gap-2 items-center">
+                              {u.email?.toLowerCase() === 'jesus.israel.lima.canaza@gmail.com' ? (
+                                <span className="text-[9px] font-black text-blue-500/50 uppercase italic">Nivel Root</span>
+                              ) : u.role === 'staff' ? (
                                 <button 
                                   onClick={() => updateUserRole(u.id, 'admin')}
                                   className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[9px] font-black rounded uppercase hover:bg-amber-500 hover:text-white transition-all"
@@ -690,9 +708,19 @@ export default function App() {
                                 <button 
                                   onClick={() => updateUserRole(u.id, 'staff')}
                                   className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black rounded uppercase hover:bg-emerald-500 hover:text-white transition-all"
-                                  disabled={u.id === user.uid} // Evitar auto-baneo
+                                  disabled={u.id === user.uid}
                                 >
                                   Hacer Encargado
+                                </button>
+                              )}
+
+                              {u.id !== user.uid && (
+                                <button 
+                                  onClick={() => deleteUserRole(u.id)}
+                                  className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                                  title="Eliminar Registro de Rol"
+                                >
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               )}
                             </div>

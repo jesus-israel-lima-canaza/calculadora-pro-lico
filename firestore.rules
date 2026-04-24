@@ -59,11 +59,11 @@ service cloud.firestore {
 
     // Role Assignments
     match /roles/{userId} {
-      allow get: if isSignedIn() && (request.auth.uid == userId || (exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin'));
-      allow list: if isSignedIn() && exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
       allow create: if isOwner(userId);
-      allow update: if isSignedIn() && exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
-      allow delete: if false; 
+      allow update: if isAdmin();
+      allow delete: if isAdmin(); 
     }
 
     // Collection Rules
