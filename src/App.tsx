@@ -129,9 +129,15 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
+        const isMasterAdmin = u.email?.toLowerCase() === 'jesus.israel.lima.canaza@gmail.com';
+        
+        // Optimistic UI update for master admin
+        if (isMasterAdmin) {
+          setUserRole('admin');
+        }
+
         try {
           const role = await getUserRole(u.uid);
-          const isMasterAdmin = u.email?.toLowerCase() === 'jesus.israel.lima.canaza@gmail.com';
           
           if (role) {
             if (isMasterAdmin && role !== 'admin') {
@@ -151,6 +157,8 @@ export default function App() {
           }
         } catch (err) {
           console.error("Role fetch error:", err);
+          // Still keep admin role if master email even if fetch fails
+          if (isMasterAdmin) setUserRole('admin');
         }
       } else {
         setUserRole(null);
@@ -159,7 +167,7 @@ export default function App() {
       setIsAuthReady(true);
     });
     return () => unsubscribe();
-  }, []);
+  }, []); // Fixed: empty dependencies for auth listener
 
   // --- Firestore Sync for Settings & Commissions ---
   useEffect(() => {
@@ -605,7 +613,7 @@ export default function App() {
                   {user.displayName || user.email?.split('@')[0] || 'Usuario'}
                 </span>
                 <span className={`text-[7px] font-bold ${userRole === 'admin' ? 'text-amber-500' : 'text-emerald-500'} uppercase tracking-widest mt-0.5`}>
-                  {userRole?.toUpperCase() || 'USUARIO'}
+                  {user.email?.toLowerCase() === 'jesus.israel.lima.canaza@gmail.com' ? 'ADMINISTRADOR' : (userRole?.toUpperCase() || 'USUARIO')}
                 </span>
               </div>
               {userRole === 'admin' && (
