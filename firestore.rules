@@ -19,12 +19,18 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/roles/$(userId)).data.role;
     }
 
-    function isAdmin(userId) {
-      return isSignedIn() && (isOwner(userId) || getUserRole(request.auth.uid) == 'admin');
+    function isAdmin() {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email.lower() == 'jesus.israel.lima.canaza@gmail.com'
+      );
     }
 
-    function isStaff(userId) {
-      return isSignedIn() && (isOwner(userId) || getUserRole(request.auth.uid) == 'staff' || isAdmin(userId));
+    function isStaff() {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && (get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role in ['admin', 'staff'])) ||
+        request.auth.token.email.lower() == 'jesus.israel.lima.canaza@gmail.com'
+      );
     }
 
     function isValidId(id) {
@@ -53,26 +59,23 @@ service cloud.firestore {
 
     // Role Assignments
     match /roles/{userId} {
-      allow get: if isSignedIn() && (request.auth.uid == userId || getUserRole(request.auth.uid) == 'admin');
-      allow list: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+      allow get: if isSignedIn() && (request.auth.uid == userId || (exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin'));
+      allow list: if isSignedIn() && exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
       allow create: if isOwner(userId);
-      allow update: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+      allow update: if isSignedIn() && exists(/databases/$(database)/documents/roles/$(request.auth.uid)) && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'admin';
       allow delete: if false; 
     }
 
     // Collection Rules
     match /users/{userId} {
       match /products/{productId} {
-        allow get: if isStaff(userId) && isValidId(productId);
-        allow list: if isStaff(userId);
-        allow create: if isStaff(userId) && isValidId(productId) && isValidProduct(incoming());
-        allow update: if isStaff(userId) && isValidId(productId) && isValidProduct(incoming());
-        allow delete: if isStaff(userId) && isValidId(productId);
+        allow get, list: if isOwner(userId) || isStaff();
+        allow create, update, delete: if (isOwner(userId) || isStaff()) && isValidId(productId) && (request.method != 'delete' ? isValidProduct(incoming()) : true);
       }
 
       match /settings/config {
-        allow get: if isStaff(userId);
-        allow write: if isAdmin(userId) && isValidSettings(incoming());
+        allow get: if isOwner(userId) || isStaff();
+        allow write: if (isOwner(userId) || isAdmin()) && isValidSettings(incoming());
       }
     }
   }

@@ -131,14 +131,14 @@ export default function App() {
       if (u) {
         try {
           const role = await getUserRole(u.uid);
-          const isMasterAdmin = u.email === 'Jesus.Israel.Lima.Canaza@gmail.com';
+          const isMasterAdmin = u.email?.toLowerCase() === 'jesus.israel.lima.canaza@gmail.com';
           
           if (role) {
             if (isMasterAdmin && role !== 'admin') {
               await setDoc(doc(db, 'roles', u.uid), { role: 'admin' }, { merge: true });
               setUserRole('admin');
             } else {
-              setUserRole(role);
+              setUserRole((role as UserRole));
             }
           } else {
             const newRole: UserRole = isMasterAdmin ? 'admin' : 'staff';
@@ -450,7 +450,7 @@ export default function App() {
     };
 
     return (
-      <div className={`min-h-screen flex items-center justify-center p-6 ${settings.theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'}`}>
+      <div translate="no" className={`min-h-screen flex items-center justify-center p-6 ${settings.theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'}`}>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -529,7 +529,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${settings.theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans p-0 flex flex-col`}>
+    <div translate="no" className={`min-h-screen transition-colors duration-300 ${settings.theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans p-0 flex flex-col`}>
       {/* Header Section */}
       <header className={`px-6 py-4 flex justify-between items-center border-b sticky top-0 z-10 backdrop-blur no-print ${settings.theme === 'dark' ? 'border-slate-700 bg-slate-900/80' : 'border-slate-200 bg-white/80'}`}>
         <div className="flex items-center gap-3">
@@ -600,16 +600,18 @@ export default function App() {
                   <User className="w-4 h-4 text-slate-500" />
                 )}
               </div>
-              <div className="hidden lg:flex flex-col items-start mr-2">
-                <span className="text-[9px] font-black text-slate-200 uppercase truncate max-w-[100px] leading-none">{user.displayName || user.email?.split('@')[0] || 'Usuario'}</span>
-                <span className={`text-[7px] font-bold ${userRole === 'admin' ? 'text-amber-500' : 'text-emerald-500'} uppercase tracking-tighter`}>
+              <div className="hidden lg:flex flex-col items-start px-2">
+                <span className="text-[9px] font-black text-slate-200 uppercase truncate max-w-[100px] leading-none">
+                  {user.displayName || user.email?.split('@')[0] || 'Usuario'}
+                </span>
+                <span className={`text-[7px] font-bold ${userRole === 'admin' ? 'text-amber-500' : 'text-emerald-500'} uppercase tracking-widest mt-0.5`}>
                   {userRole?.toUpperCase() || 'USUARIO'}
                 </span>
               </div>
               {userRole === 'admin' && (
                 <button 
                   onClick={() => setShowUsers(!showUsers)}
-                  className={`p-2 rounded-lg transition-all ${showUsers ? 'bg-amber-500/20 text-amber-500' : 'text-slate-500 hover:bg-slate-800'}`}
+                  className={`p-2 rounded-lg transition-all ${showUsers ? 'bg-amber-500/20 text-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                   title="Gestión de Usuarios"
                 >
                   <Users className="w-4 h-4" />
