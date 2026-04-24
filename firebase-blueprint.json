@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product Record",
+      "description": "Calculated product record with costing and pricing data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "supplier": { "type": "string" },
+        "barcode": { "type": "string" },
+        "purchaseType": { "type": "string" },
+        "netInvoiceValue": { "type": "number" },
+        "taxCategory": { "type": "string" },
+        "marginPercent": { "type": "number" },
+        "purchaseValueType": { "type": "string" },
+        "totalCost": { "type": "number" },
+        "unitNet": { "type": "number" },
+        "counterPrice": { "type": "number" },
+        "pedidosYaPrice": { "type": "number" },
+        "debitPrice": { "type": "number" },
+        "creditPrice": { "type": "number" },
+        "netProfitUnit": { "type": "number" },
+        "unitsPerPurchase": { "type": "number" },
+        "date": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "totalCost", "ownerId"]
+    },
+    "Settings": {
+      "title": "User Settings",
+      "description": "App preferences and commissions",
+      "type": "object",
+      "properties": {
+        "theme": { "type": "string" },
+        "roundingMode": { "type": "string" },
+        "commissions": {
+          "type": "object",
+          "properties": {
+            "debit": { "type": "number" },
+            "credit": { "type": "number" },
+            "delivery": { "type": "number" },
+            "deliveryName": { "type": "string" },
+            "packagingCost": { "type": "number" }
+          }
+        }
+      }
+    },
+    "UserRole": {
+      "title": "User Role",
+      "description": "RBAC role assignment",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "email": { "type": "string" }
+      },
+      "required": ["role", "email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/products/{productId}": {
+      "schema": "Product",
+      "description": "User's saved products"
+    },
+    "/users/{userId}/settings/config": {
+      "schema": "Settings",
+      "description": "User's app configuration"
+    },
+    "/roles/{userId}": {
+      "schema": "UserRole",
+      "description": "System-level role assignment"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  @media print {
+    /* Ocultar todo por defecto */
+    body {
+      background: white !important;
+      color: black !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    /* Ocultar todos los elementos excepto el que queremos imprimir */
+    header, footer, main, .no-print {
+      display: none !important;
+    }
+
+    /* Mostrar solo la etiqueta y forzar su posición */
+    #printable-label {
+      display: block !important;
+      visibility: visible !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 80mm !important;
+      height: 40mm !important;
+      border: 1px solid black !important;
+      margin: 0 !important;
+      padding: 5mm !important; /* Un poco mas de margen interno para impresoras termicas */
+      box-sizing: border-box !important;
+    }
+
+    #printable-label * {
+      visibility: visible !important;
+      color: black !important;
+    }
+
+    /* Configuración de la página */
+    @page {
+      size: 80mm 40mm;
+      margin: 0;
+    }
+  }
+}

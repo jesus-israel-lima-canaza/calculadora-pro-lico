@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/roles/$(userId)).data.role;
+    }
+
+    function isAdmin(userId) {
+      return isSignedIn() && (isOwner(userId) || getUserRole(request.auth.uid) == 'admin');
+    }
+
+    function isStaff(userId) {
+      return isSignedIn() && (isOwner(userId) || getUserRole(request.auth.uid) == 'staff' || isAdmin(userId));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.totalCost is number && data.totalCost >= 0;
+    }
+
+    function isValidSettings(data) {
+      return data.commissions is map &&
+             data.commissions.debit is number && data.commissions.debit >= 0 && data.commissions.debit <= 100 &&
+             data.commissions.credit is number && data.commissions.credit >= 0 && data.commissions.credit <= 100 &&
+             data.commissions.delivery is number && data.commissions.delivery >= 0 && data.commissions.delivery <= 100;
+    }
+
+    // Role Assignments
+    match /roles/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || getUserRole(request.auth.uid) == 'admin');
+      allow list: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+      allow create: if isOwner(userId);
+      allow update: if isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+      allow delete: if false; 
+    }
+
+    // Collection Rules
+    match /users/{userId} {
+      match /products/{productId} {
+        allow get: if isStaff(userId) && isValidId(productId);
+        allow list: if isStaff(userId);
+        allow create: if isStaff(userId) && isValidId(productId) && isValidProduct(incoming());
+        allow update: if isStaff(userId) && isValidId(productId) && isValidProduct(incoming());
+        allow delete: if isStaff(userId) && isValidId(productId);
+      }
+
+      match /settings/config {
+        allow get: if isStaff(userId);
+        allow write: if isAdmin(userId) && isValidSettings(incoming());
+      }
+    }
+  }
+}
